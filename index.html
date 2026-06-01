@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1e;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        #app {
+            width: 90%;
+            max-width: 600px;
+            background: #1d1e28;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .screen-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1.8rem;
+            color: #e0e0ff;
+        }
+
+        .topics-grid, .difficulty-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1.05rem;
+            border-radius: 12px;
+            padding: 0.9rem 1.4rem;
+            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+            background-color: #222327;
+            color: #d1d1e9;
+            font-weight: 500;
+            width: 100%;
+            text-align: center;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #3b3b5c;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #2d2d44;
+            color: #7b7b9a;
+        }
+
+        .option-btn {
+            background-color: #25253a;
+            border: 2px solid #3d3d5c;
+            margin-bottom: 0.6rem;
+            font-weight: 400;
+            padding: 0.8rem 1rem;
+            color: #d1d1e9;
+            transition: background-color 0.15s, border-color 0.15s;
+        }
+
+        .option-btn.selected {
+            background-color: #6c63ff;
+            border-color: #6c63ff;
+            color: white;
+            font-weight: 500;
+        }
+
+        .option-btn.correct-answer {
+            background-color: #2e7d32;
+            border-color: #2e7d32;
+            color: white;
+            font-weight: 500;
+        }
+
+        .option-btn.incorrect-answer {
+            background-color: #c62828;
+            border-color: #c62828;
+            color: white;
+            font-weight: 500;
+        }
+
+        .next-btn {
+            background-color: #6c63ff;
+            color: white;
+            font-weight: 600;
+            margin-top: 1.4rem;
+            padding: 0.85rem;
+            border-radius: 14px;
+            font-size: 1.1rem;
+        }
+
+        .next-btn:not(:disabled):hover {
+            background-color: #5a52e0;
+        }
+
+        .next-btn:disabled {
+            background-color: #3a3a5e;
+            color: #9d9dcb;
+        }
+
+        .back-btn {
+            background-color: transparent;
+            color: #b0b0ff;
+            border: 2px solid #6c63ff;
+            margin-top: 1.2rem;
+            font-weight: 600;
+        }
+
+        .back-btn:hover:not(:disabled) {
+            background-color: #6c63ff;
+            color: white;
+        }
+
+        .question-info {
+            font-size: 0.95rem;
+            color: #a0a0c0;
+            margin-bottom: 0.3rem;
+        }
+
+        .timer {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 1rem;
+            background: #2d2d44;
+            padding: 0.3rem 1rem;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+            color: #e0e0ff;
+        }
+
+        .result-message {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin: 1.5rem 0;
+            color: #e0e0ff;
+        }
+
+        .screen {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        (function() {
+            // Вопросы по форме { "текст": "?", "варианты": ["", "", ""], "правильный_индекс":  },
+            const quizData = {         
+                "МКТ": {
+                    "вопросы": [
+                        { "текст": "Что такое МКТ?", "варианты": ["Молекулярно-контактная теория", "Молекулярно кинетическая теория", "Молекулярно конваскулярная теория"], "правильный_индекс": 1 },
+                        { "текст": "У какого состояния вещества сохраняется форма?", "варианты": ["Твердое", "Газообразное", "Жидкое"], "правильный_индекс": 0 },
+                        { "текст": "В каком агрегатном состоянии диффузия проходит быстрее?", "варианты": ["Твердом", "Газообразном", "Жидком"], "правильный_индекс": 1 },
+                        { "текст": "Изохорный процесс – это?", "варианты": ["Процесс, происходящий при постоянном давлении.", "Процесс, происходящий без теплопередачи.", "Процесс, происходящий при постоянном объеме."], "правильный_индекс": 2 },
+                        { "текст": "Адиабатный процесс – это?", "варианты": ["Процесс, происходящий при постоянном давлении.", "Процесс,происходящий безтеплопередачи.", "Процесс, происходящий при постоянной температуре."], "правильный_индекс": 1 },
+                        { "текст": "Что изменяется в Изотермическом процессе?", "варианты": ["Объем", "Температура", "Давление"], "правильный_индекс": 1 },
+                        { "текст": "При каком условии, работа газа положительна?", "варианты": ["В покое", "При расширении", "При сжатии"], "правильный_индекс": 1 },
+                        { "текст": "Как считать кпд в циклическом процессе?", "варианты": ["Нагрев *100 / Полезное действие", "Нагрев * Полезное действие / 100", "Полезное действие / нагрев * 100"], "правильный_индекс": 2 },
+                        { "текст": "Что делают от угарного газа?", "варианты": ["Угарают", "Грустят", "Умирают"], "правильный_индекс": 2 },
+                        { "текст": "При плавлении энергия?", "варианты": ["Поглощается", "Выделяется", "Сублимируется"], "правильный_индекс": 0 },
+                        { "текст": "Насыщенный пар меняет давление в зависимости от?", "варианты": ["Влажности", "Температуры", "Плотности вещества пара"], "правильный_индекс": 1 },
+                        { "текст": "Чему равно уравнение теплового баланса?", "варианты": ["Qполуч / Qотдан", "Qполуч * Qотдан", "Qполуч + Qотдан"], "правильный_индекс": 2 },
+                        { "текст": "В чем смысл жизни?", "варианты": ["В котиках", "42", "Сбежать из таркова"], "правильный_индекс": -1 },
+                    ]
+                },
+                "Механика": {
+                    "вопросы": [
+                        { "текст": "Формула ускорения?", "варианты": ["∆v/t", "∆v/∆t", "v/t"], "правильный_индекс": 1 },
+                        { "текст": "Ускорение свободного падения?(мс/с2)", "варианты": ["9.8", "1.6", "3,7", ], "правильный_индекс": 0 },
+                        { "текст": "Какое определение 1го закона ньютона правильное?", "варианты": ["Существуют такие системы отсчета, называемые инерциальными, в которых тело покоится или двигается равномерно и прямолинейно до тех пор, пока на тело не действуют никакие силы или их векторная сумма равна 0.", "существуют такие системы отсчета, называемые инерциальными, в которых тело покоится или двигается равномерно и прямолинейно до тех пор, пока на тело не действуют никакие силы или их векторная сумма равна 1.", "существуют такие системы отсчета, называемые инерциальными, в которых тело покоится или двигается равномерно и прямолинейно до тех пор, пока на тело не действуют никакие силы или их векторная сумма меньше 0."], "правильный_индекс": 0 },
+                        { "текст": "Формула силы тяжести?", "варианты": ["F=m⋅g", "F=m/g", "F=g/m"], "правильный_индекс": 2 },
+                        { "текст": "В каких единицах СИ измеряется сила упругости в формуле закона Гука?", "варианты": ["Килограмм", "Ньютон", "Паскаль"], "правильный_индекс": 1 },
+                        { "текст": "Величина удлинения пружины в законе Гука выражается в СИ -", "варианты": ["Метры", "Сантиметры", "Милиметры"], "правильный_индекс": 0 },
+                        { "текст": "По какой формуле вычисляется сила Архимеда?", "варианты": ["F=ρ⋅g⋅V", "F=m⋅g", "F=ρ⋅V/g"], "правильный_индекс": 0 },
+                        { "текст": "Как изменится сила Архимеда, действующая на одно и то же тело в одной и той же жидкости, если эксперимент перенести с Земли на Луну??", "варианты": ["Не изменится", "Увеличится", " Уменьшится"], "правильный_индекс": 2 },
+                        { "текст": "Как будет изменяться потенциальная энергия при падении предмета?", "варианты": ["Не изменится", "Увеличится", "Уменьшится"], "правильный_индекс": 2 },
+                        { "текст": "Как расшифровывается ЗСИ?", "варианты": ["Закон сокращения импульсов", "Закон сохранения импульса", "Зоопарк им. Сарапулова Ивана"], "правильный_индекс": 1 },
+                        { "текст": "В чем измеряют угловую скорость тела движущегося по окружности?", "варианты": ["М/с", "Км/ч", "Рад/с"], "правильный_индекс": 2 },
+                        { "текст": "Куда направлено центростремительное ускорение в теле движущемся по окружности?", "варианты": ["К центру окружности", "От центра окружности", "По краю окружности"], "правильный_индекс": 0 },
+                        { "текст": "Какой параметр определяет эта формул:2πν ?", "варианты": ["ω – угловая скорость", "V – угловая скорость", "v – линейная скорость"], "правильный_индекс": 0 },
+                        { "текст": "Чему равно произведение 7 × 8?", "варианты": ["54", "56", "58", "60"], "правильный_индекс": 1 },
+                        { "текст": "От чего зависит момент силы?", "варианты": ["От веса", "От длины плеча", "От ускорения свободного падения"], "правильный_индекс": 1 },
+                        { "текст": "Чему равно Плечо силы тяжести объемных объектов?", "варианты": ["кратчайшее расстояние между осью вращения и их центром массы.", "Наибольшее расстояние между осью вращения и центром объекта", "кратчайшее расстояние между осью вращения и их геометрическим центром."], "правильный_индекс": 2 },
+                        { "текст": "Единицы измерения давления?", "варианты": ["Атмосферы", "Паскали", "Н/см2"], "правильный_индекс": 1 },
+                        { "текст": "Чему равна частота?", "варианты": ["1/Т", "1/v", "P/T"], "правильный_индекс": 0 },
+                        { "текст": "Скорость волны равна?", "варианты": ["Частота * длину", "Частота / длину", "Длину / частоту"], "правильный_индекс": 0 }
+                        //19
+                    ]
+                }
+            };
+
+            // Состояние
+            let state = {
+                screen: 'topics',         
+                topic: null,
+                difficulty: null,         // easy hard
+                currentQuestionIndex: 0,
+                score: 0,
+                selectedAnswer: null,
+                showingFeedback: false,
+                timerIntervalId: null,
+                timeLeft: 0               // оставшеесся время
+            };
+
+            const app = document.getElementById('app');
+
+            const BASE_TIMES = {
+                easy: 40,
+                hard: 15
+            };
+
+            // уменьшение ввремени
+            function getTimeForQuestion(baseTime, questionIndex) {
+                let time = baseTime - questionIndex; // с 0
+                return Math.max(time, 3);
+            }
+
+            
+            function clearTimer() {
+                if (state.timerIntervalId) {
+                    clearInterval(state.timerIntervalId);
+                    state.timerIntervalId = null;
+                }
+            }
+
+            // Отрисовка интерфейса
+            function render() {
+                clearTimer(); 
+                if (state.screen === 'topics') {
+                    renderTopicsScreen();
+                } else if (state.screen === 'difficulty') {
+                    renderDifficultyScreen();
+                } else if (state.screen === 'quiz') {
+                    renderQuizScreen();
+                    startQuestionTimer(); // запуск таймера 
+                } else if (state.screen === 'result') {
+                    renderResultScreen();
+                }
+            }
+
+            // экран выбора
+            function renderTopicsScreen() {
+                const topics = Object.keys(quizData);
+                let buttonsHTML = topics.map(topic =>
+                    `<button class="topic-btn" data-topic="${topic}">${topic}</button>`
+                ).join('');
+
+                app.innerHTML = `
+                    <div class="screen" id="topics-screen">
+                        <h1 class="screen-title">Выберите тему</h1>
+                        <div class="topics-grid">
+                            ${buttonsHTML}
+                        </div>
+                    </div>
+                `;
+            }
+
+            function renderDifficultyScreen() {
+                app.innerHTML = `
+                    <div class="screen" id="difficulty-screen">
+                        <h2 class="screen-title">Тема: ${state.topic}</h2>
+                        <p style="color:#a0a0c0; margin-bottom:1.5rem;">Выберите уровень сложности</p>
+                        <div class="difficulty-grid">
+                            <button class="difficulty-btn" data-difficulty="easy">Лёгкий (40 сек)</button>
+                            <button class="difficulty-btn" data-difficulty="hard">Сложный (15 сек)</button>
+                        </div>
+                        <button class="back-btn" id="back-from-difficulty">Вернуться к темам</button>
+                    </div>
+                `;
+            }
+
+            // вопросы
+            function renderQuizScreen() {
+                const topic = state.topic;
+                const questions = quizData[topic]["вопросы"];
+                const total = questions.length;
+                const current = state.currentQuestionIndex;
+                const question = questions[current];
+                const selected = state.selectedAnswer;
+                const showFeedback = state.showingFeedback;
+
+                const questionNumber = current + 1;
+                const Last = current === total - 1;
+                const nextButtonText = Last ? 'Завершить тест' : 'Следующий вопрос';
+                const nextDisabled = selected === null || showFeedback;
+
+                // Таймер
+                const timerDisplay = `<div class="timer" id="timer-display"> ${state.timeLeft} сек</div>`;
+
+                let optionsHTML = question["варианты"].map((opt, idx) => {
+                    let additionalClass = '';
+                    if (showFeedback && idx === selected) {
+                        const isCorrect = selected === question["правильный_индекс"];
+                        additionalClass = isCorrect ? 'correct-answer' : 'incorrect-answer';
+                    } else if (!showFeedback && idx === selected) {
+                        additionalClass = 'selected';
+                    }
+                    return `<button class="option-btn ${additionalClass}" data-option-index="${idx}" ${showFeedback ? 'disabled' : ''}>${opt}</button>`;
+                }).join('');
+
+                app.innerHTML = `
+                    <div class="screen" id="quiz-screen">
+                        <h2 class="screen-title">${topic}</h2>
+                        <div class="question-info">Вопрос ${questionNumber} из ${total}</div>
+                        ${timerDisplay}
+                        <div class="question-text">${question["текст"]}</div>
+                        <div class="options-container" style="width:100%;">
+                            ${optionsHTML}
+                        </div>
+                        <button class="next-btn" id="next-button" ${nextDisabled ? 'disabled' : ''}>${nextButtonText}</button>
+                        <button class="back-btn" id="back-to-topics-btn" ${showFeedback ? 'disabled' : ''}>Вернуться к выбору темы</button>
+                    </div>
+                `;
+            }
+
+            function renderResultScreen() {
+                const total = quizData[state.topic]["вопросы"].length;
+                const score = state.score;
+                app.innerHTML = `
+                    <div class="screen" id="result-screen">
+                        <h2 class="screen-title">Результат</h2>
+                        <div class="result-message">
+                            Вы ответили правильно на ${score} из ${total} вопросов
+                        </div>
+                        <button class="back-btn" id="back-to-topics-from-result">Вернуться к выбору темы</button>
+                    </div>
+                `;
+            }
+
+           
+            function startQuestionTimer() {
+                clearTimer(); 
+                const baseTime = BASE_TIMES[state.difficulty];
+                const timeForThis = getTimeForQuestion(baseTime, state.currentQuestionIndex);
+                state.timeLeft = timeForThis;
+                const timerEl = document.getElementById('timer-display');
+                if (timerEl) timerEl.textContent = ` ${state.timeLeft} сек`;
+
+                state.timerIntervalId = setInterval(() => {
+                    state.timeLeft--;
+                    const el = document.getElementById('timer-display');
+                    if (el) el.textContent = ` ${state.timeLeft} сек`;
+
+                    if (state.timeLeft <= 0) {
+                        clearTimer();
+                        // скип
+                        if (state.selectedAnswer === null && state.screen === 'quiz' && !state.showingFeedback) {
+                            Timeout();
+                        }
+                    }
+                }, 1000);
+            }
+
+            
+            function Timeout() {
+                
+                state.showingFeedback = false; 
+                finalizeAnswer(); 
+            }
+
+            
+            app.addEventListener('click', (e) => {
+                const target = e.target;
+
+                
+                if (target.classList.contains('topic-btn')) {
+                    const topic = target.dataset.topic;
+                    if (topic && quizData[topic]) {
+                        state.topic = topic;
+                        state.screen = 'difficulty';
+                        render();
+                    }
+                    return;
+                }
+
+                if (target.classList.contains('difficulty-btn')) {
+                    const difficulty = target.dataset.difficulty;
+                    if (difficulty === 'easy' || difficulty === 'hard') {
+                        startQuiz(difficulty);
+                    }
+                    return;
+                }
+
+                if (target.id === 'back-from-difficulty') {
+                    state.screen = 'topics';
+                    state.topic = null;
+                    render();
+                    return;
+                }
+                if (target.classList.contains('option-btn')) {
+                    if (state.screen !== 'quiz' || state.showingFeedback) return;
+                    const optionIndex = parseInt(target.dataset.optionIndex, 10);
+                    if (!isNaN(optionIndex)) {
+                        selectAnswer(optionIndex);
+                    }
+                    return;
+                }
+
+                if (target.id === 'next-button') {
+                    if (state.screen === 'quiz' && state.selectedAnswer !== null && !state.showingFeedback) {
+                        showFeedbackAndProceed();
+                    }
+                    return;
+                }
+
+                if (target.id === 'back-to-topics-btn') {
+                    if (state.showingFeedback) return;
+                    resetToTopics();
+                    return;
+                }
+
+                if (target.id === 'back-to-topics-from-result') {
+                    resetToTopics();
+                    return;
+                }
+            });
+
+            function startQuiz(difficulty) {
+                clearTimer();
+                state.screen = 'quiz';
+                state.difficulty = difficulty;
+                state.currentQuestionIndex = 0;
+                state.score = 0;
+                state.selectedAnswer = null;
+                state.showingFeedback = false;
+                state.timeLeft = 0;
+                render(); 
+            }
+
+            function selectAnswer(index) {
+                if (state.screen !== 'quiz' || state.showingFeedback) return;
+                state.selectedAnswer = index;
+                clearTimer(); 
+                render(); 
+            }
+
+            function showFeedbackAndProceed() {
+                state.showingFeedback = true;
+                clearTimer(); 
+                render();
+
+                setTimeout(() => {
+                    finalizeAnswer();
+                }, 1200);
+            }
+
+            function finalizeAnswer() {
+                if (state.screen !== 'quiz') return;
+
+                const questions = quizData[state.topic]["вопросы"];
+                const currentQuestion = questions[state.currentQuestionIndex];
+                const selected = state.selectedAnswer;
+
+                
+                if (selected !== null && selected === currentQuestion["правильный_индекс"]) {
+                    state.score++;
+                }
+
+                const isLast = state.currentQuestionIndex === questions.length - 1;
+
+                
+                state.showingFeedback = false;
+                state.selectedAnswer = null;
+                clearTimer();
+
+                if (isLast) {
+                    state.screen = 'result';
+                    render();
+                } else {
+                    state.currentQuestionIndex++;
+                    render(); 
+                }
+            }
+            function resetToTopics() {
+                clearTimer();
+                state.screen = 'topics';
+                state.topic = null;
+                state.difficulty = null;
+                state.currentQuestionIndex = 0;
+                state.score = 0;
+                state.selectedAnswer = null;
+                state.showingFeedback = false;
+                state.timeLeft = 0;
+                render();
+            }
+
+            render();
+        })();
+    </script>
+</body>
+</html>
